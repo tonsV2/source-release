@@ -46,7 +46,16 @@ open class ReleaseTask : DefaultTask() {
             call()
         }
 
-        // TODO: Merge current branch into /release
+        // Merge current branch into /release
+        val currentBranch = git.repository.branch
+        val currentBranchRef = git.repository.findRef(currentBranch)
+        val releaseBranch = "release"
+        git.checkout().setName(releaseBranch).call()
+
+        val mergeCommand = git.merge()
+        mergeCommand.include(currentBranchRef)
+        mergeCommand.call()
+
         // TODO: Push /release
         // TODO: Checkout previous branch
     }
