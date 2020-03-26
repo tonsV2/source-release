@@ -29,7 +29,7 @@ open class ReleaseTask : DefaultTask() {
         git = Git.open(gitWorkingDirectory)
 
         assertCleanWorkingDirectory()
-        // TODO: Execute test task... Unless skip tests
+        runTests()
         saveCurrentBranch()
         bumpVersion()
         commit()
@@ -68,10 +68,10 @@ open class ReleaseTask : DefaultTask() {
         }
     }
 
-    private fun tag() {
-        with(git.tag()) {
-            name = "v$version"
-            call()
+    private fun runTests() {
+        val testTaskName = "test"
+        if (project.tasks.any { it.name == testTaskName }) {
+            project.tasks.getByName(testTaskName).doLast {}
         }
     }
 
