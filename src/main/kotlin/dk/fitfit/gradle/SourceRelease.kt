@@ -39,28 +39,6 @@ open class ReleaseTask : DefaultTask() {
         checkoutPreviousBranch()
     }
 
-    private fun checkoutPreviousBranch() {
-        git.checkout().setName(currentBranch).call()
-    }
-
-    private fun pushCurrentBranch() {
-        git.push().call()
-    }
-
-    private fun saveCurrentBranch() {
-        currentBranch = git.repository.branch
-    }
-
-    private fun mergeCurrentIntoRelease(): String? {
-        val currentBranchRef = git.repository.findRef(currentBranch)
-        git.checkout().setName(releaseBranch).call()
-
-        val mergeCommand = git.merge()
-        mergeCommand.include(currentBranchRef)
-        mergeCommand.call()
-        return currentBranch
-    }
-
     private fun assertCleanWorkingDirectory() {
         val clean = git.status().call().isClean
         if (!clean) {
@@ -75,12 +53,8 @@ open class ReleaseTask : DefaultTask() {
         }
     }
 
-    private fun commit() {
-        with(git.commit()) {
-            message = "Bump version to $version"
-            setAll(true)
-            call()
-        }
+    private fun saveCurrentBranch() {
+        currentBranch = git.repository.branch
     }
 
     private fun bumpVersion() {
@@ -100,5 +74,38 @@ open class ReleaseTask : DefaultTask() {
         // Replace version in file
         val replaceFirst = versionPropertyFileContent.replaceFirst(regex, "version = \'$version\'")
         file.writeText(replaceFirst)
+    }
+
+    private fun commit() {
+        with(git.commit()) {
+            message = "Bump version to $version"
+            setAll(true)
+            call()
+        }
+    }
+
+    private fun tag() {
+        with(git.tag()) {
+            name = "v$version"
+            call()
+        }
+    }
+
+    private fun mergeCurrentIntoRelease(): String? {
+        val currentBranchRef = git.repository.findRef(currentBranch)
+        git.checkout().setName(releaseBranch).call()
+
+        val mergeCommand = git.merge()
+        mergeCommand.include(currentBranchRef)
+        mergeCommand.call()
+        return currentBranch
+    }
+
+    private fun pushCurrentBranch() {
+        git.push().call()
+    }
+
+    private fun checkoutPreviousBranch() {
+        git.checkout().setName(currentBranch).call()
     }
 }
