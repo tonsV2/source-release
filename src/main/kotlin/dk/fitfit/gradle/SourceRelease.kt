@@ -40,7 +40,12 @@ open class ReleaseTask : DefaultTask() {
             call()
         }
 
-        // TODO: Tag
+        // Tag
+        with(git.tag()) {
+            name = "v$version"
+            call()
+        }
+
         // TODO: Merge current branch into /release
         // TODO: Push /release
         // TODO: Checkout previous branch
