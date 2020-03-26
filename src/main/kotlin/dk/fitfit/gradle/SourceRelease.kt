@@ -56,7 +56,9 @@ open class ReleaseTask : DefaultTask() {
         mergeCommand.include(currentBranchRef)
         mergeCommand.call()
 
-        // TODO: Push /release
+        // Push /release
+        git.push().call()
+
         // TODO: Checkout previous branch
     }
 
