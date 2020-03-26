@@ -17,53 +17,73 @@ class SourceRelease : Plugin<Project> {
 open class ReleaseTask : DefaultTask() {
     val versionPropertyFile = "build.gradle"
     val bumpStrategy = MINOR
+    val releaseBranch = "release"
+
+    private lateinit var git: Git
+    private lateinit var version: Version
+    private lateinit var currentBranch: String
 
     @TaskAction
     fun release() {
         val gitWorkingDirectory = project.layout.projectDirectory.asFile
-        val git = Git.open(gitWorkingDirectory)
+        git = Git.open(gitWorkingDirectory)
 
-        val clean = git.status().call().isClean
-        if (!clean) {
-            throw IllegalStateException("Working directory isn't clean")
-        }
-
+        assertCleanWorkingDirectory()
         // TODO: Execute test task... Unless skip tests
+        saveCurrentBranch()
+        bumpVersion()
+        commit()
+        tag()
+        mergeCurrentIntoRelease()
+        pushCurrentBranch()
+        checkoutPreviousBranch()
+    }
 
-        // Bump version
-        val version = bumpVersion()
+    private fun checkoutPreviousBranch() {
+        git.checkout().setName(currentBranch).call()
+    }
 
-        // Commit
-        with(git.commit()) {
-            message = "Bump version to $version"
-            setAll(true)
-            call()
-        }
+    private fun pushCurrentBranch() {
+        git.push().call()
+    }
 
-        // Tag
-        with(git.tag()) {
-            name = "v$version"
-            call()
-        }
+    private fun saveCurrentBranch() {
+        currentBranch = git.repository.branch
+    }
 
-        // Merge current branch into /release
-        val currentBranch = git.repository.branch
+    private fun mergeCurrentIntoRelease(): String? {
         val currentBranchRef = git.repository.findRef(currentBranch)
-        val releaseBranch = "release"
         git.checkout().setName(releaseBranch).call()
 
         val mergeCommand = git.merge()
         mergeCommand.include(currentBranchRef)
         mergeCommand.call()
-
-        // Push /release
-        git.push().call()
-
-        // Checkout previous branch
-        git.checkout().setName(currentBranch).call()
+        return currentBranch
     }
 
-    private fun bumpVersion(): Version {
+    private fun assertCleanWorkingDirectory() {
+        val clean = git.status().call().isClean
+        if (!clean) {
+            throw IllegalStateException("Working directory isn't clean")
+        }
+    }
+
+    private fun tag() {
+        with(git.tag()) {
+            name = "v$version"
+            call()
+        }
+    }
+
+    private fun commit() {
+        with(git.commit()) {
+            message = "Bump version to $version"
+            setAll(true)
+            call()
+        }
+    }
+
+    private fun bumpVersion() {
         val file = File(versionPropertyFile)
         val versionPropertyFileContent = file.readText()
         val regex = "version = '(.*)'".toRegex()
@@ -71,7 +91,7 @@ open class ReleaseTask : DefaultTask() {
         val matchResult = regex.find(versionPropertyFileContent)
         val versionString = matchResult?.destructured?.component1()
 
-        val version = if (versionString != null) {
+        version = if (versionString != null) {
             Version.of(versionString).bump(bumpStrategy)
         } else {
             throw IllegalStateException("Unable to extract version")
@@ -80,6 +100,5 @@ open class ReleaseTask : DefaultTask() {
         // Replace version in file
         val replaceFirst = versionPropertyFileContent.replaceFirst(regex, "version = \'$version\'")
         file.writeText(replaceFirst)
-        return version
     }
 }
