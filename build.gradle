@@ -14,6 +14,7 @@ repositories {
 dependencies {
     compile gradleApi()
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
+    implementation 'org.eclipse.jgit:org.eclipse.jgit:5.7.0.202003110725-r'
 }
 
 compileKotlin {
