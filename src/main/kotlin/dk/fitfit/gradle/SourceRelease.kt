@@ -59,7 +59,8 @@ open class ReleaseTask : DefaultTask() {
         // Push /release
         git.push().call()
 
-        // TODO: Checkout previous branch
+        // Checkout previous branch
+        git.checkout().setName(currentBranch).call()
     }
 
     private fun bumpVersion(): Version {
