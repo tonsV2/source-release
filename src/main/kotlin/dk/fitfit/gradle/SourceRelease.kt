@@ -102,7 +102,7 @@ open class ReleaseTask : DefaultTask() {
     }
 
     private fun pushCurrentBranch() {
-        git.push().call()
+        git.push().setPushTags().call()
     }
 
     private fun checkoutPreviousBranch() {
