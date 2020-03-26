@@ -33,7 +33,13 @@ open class ReleaseTask : DefaultTask() {
         // Bump version
         val version = bumpVersion()
 
-        // TODO: Commit
+        // Commit
+        with(git.commit()) {
+            message = "Bump version to $version"
+            setAll(true)
+            call()
+        }
+
         // TODO: Tag
         // TODO: Merge current branch into /release
         // TODO: Push /release
