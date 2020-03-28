@@ -8,7 +8,7 @@ import org.gradle.api.Project
 import org.gradle.api.tasks.TaskAction
 import java.io.File
 
-class SourceRelease : Plugin<Project> {
+class SourceReleasePlugin : Plugin<Project> {
     override fun apply(project: Project) {
         project.tasks.create("release", ReleaseTask::class.java)
     }
