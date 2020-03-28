@@ -8,17 +8,22 @@ import org.gradle.api.Project
 import org.gradle.api.tasks.TaskAction
 import java.io.File
 
+open class SourceReleasePluginExtension {
+    var versionPropertyFile = "build.gradle"
+    var bumpStrategy = MINOR
+    var releaseBranch = "release"
+}
+
+lateinit var extension: SourceReleasePluginExtension
+
 class SourceReleasePlugin : Plugin<Project> {
     override fun apply(project: Project) {
+        extension = project.extensions.create("sourceRelease", SourceReleasePluginExtension::class.java)
         project.tasks.create("release", ReleaseTask::class.java)
     }
 }
 
 open class ReleaseTask : DefaultTask() {
-    val versionPropertyFile = "build.gradle"
-    val bumpStrategy = MINOR
-    val releaseBranch = "release"
-
     private lateinit var git: Git
     private lateinit var version: Version
     private lateinit var currentBranch: String
@@ -58,7 +63,7 @@ open class ReleaseTask : DefaultTask() {
     }
 
     private fun bumpVersion() {
-        val file = File(versionPropertyFile)
+        val file = File(extension.versionPropertyFile)
         val versionPropertyFileContent = file.readText()
         val regex = "version = '(.*)'".toRegex()
 
@@ -66,7 +71,7 @@ open class ReleaseTask : DefaultTask() {
         val versionString = matchResult?.destructured?.component1()
 
         version = if (versionString != null) {
-            Version.of(versionString).bump(bumpStrategy)
+            Version.of(versionString).bump(extension.bumpStrategy)
         } else {
             throw IllegalStateException("Unable to extract version")
         }
@@ -93,7 +98,7 @@ open class ReleaseTask : DefaultTask() {
 
     private fun mergeCurrentIntoRelease(): String? {
         val currentBranchRef = git.repository.findRef(currentBranch)
-        git.checkout().setName(releaseBranch).call()
+        git.checkout().setName(extension.releaseBranch).call()
 
         val mergeCommand = git.merge()
         mergeCommand.include(currentBranchRef)
