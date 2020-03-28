@@ -12,6 +12,7 @@ open class SourceReleasePluginExtension {
     var versionPropertyFile = "build.gradle"
     var bumpStrategy = MINOR
     var releaseBranch = "release"
+    var skipTests = false
 }
 
 lateinit var extension: SourceReleasePluginExtension
@@ -34,7 +35,9 @@ open class ReleaseTask : DefaultTask() {
         git = Git.open(gitWorkingDirectory)
 
         assertCleanWorkingDirectory()
-        runTests()
+        if (!extension.skipTests) {
+            runTests()
+        }
         saveCurrentBranch()
         bumpVersion()
         commit()
