@@ -3,12 +3,10 @@ package dk.fitfit.gradle
 import dk.fitfit.gradle.Version.Fraction.*
 
 data class Version(val major: Int, val minor: Int, val patch: Int, val qualifier: String?) {
-    fun bump(strategy: Fraction): Version {
-        return when (strategy) {
-            MAJOR -> Version(major + 1, 0, 0, qualifier)
-            MINOR -> Version(major, minor + 1, 0, qualifier)
-            PATCH -> Version(major, minor, patch + 1, qualifier)
-        }
+    fun bump(strategy: Fraction): Version = when (strategy) {
+        MAJOR -> Version(major + 1, 0, 0, qualifier)
+        MINOR -> Version(major, minor + 1, 0, qualifier)
+        PATCH -> Version(major, minor, patch + 1, qualifier)
     }
 
     enum class Fraction {
